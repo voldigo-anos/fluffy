@@ -1,100 +1,91 @@
-const { getStreamsFromAttachment } = global.utils;
+const axios = require("axios");
+const { createReadStream, unlinkSync } = require("fs");
+const { resolve } = require("path");
 
 module.exports = {
 	config: {
-		name: "notification",
-		aliases: ["notify", "noti"],
-		version: "1.7",
-		author: "NTKhang",
+		name: "sendnoti",
+		version: "1.4",
+		author: "aesther",
 		countDown: 5,
 		role: 2,
-		description: {
-			vi: "Gửi thông báo từ admin đến all box",
-			en: "Send notification from admin to all box"
+		shortDescription: {
+			vi: "Tạo và gửi thông báo đến các nhóm",
+			en: "Create and send notification to groups",
 		},
-		category: "owner",
-		guide: {
-			en: "{pn} <tin nhắn>"
+		longDescription: {
+			vi: "Tạo và gửi thông báo đến các nhóm do bạn quản lý",
+			en: "Create and send notification to groups that you manage",
 		},
-		envConfig: {
-			delayPerGroup: 250
-		}
+		category: "box chat",
 	},
 
-	langs: {
-		vi: {
-			missingMessage: "Vui lòng nhập tin nhắn bạn muốn gửi đến tất cả các nhóm",
-			notification: "Thông báo từ admin bot đến tất cả nhóm chat (không phản hồi tin nhắn này)",
-			sendingNotification: "Bắt đầu gửi thông báo từ admin bot đến %1 nhóm chat",
-			sentNotification: "✅ Đã gửi thông báo đến %1 nhóm thành công",
-			errorSendingNotification: "Có lỗi xảy ra khi gửi đến %1 nhóm:\n%2"
-		},
-		en: {
-			missingMessage: "Please enter the message you want to send to all groups",
-			notification: "Notification from admin bot to all chat groups (do not reply to this message)",
-			sendingNotification: "Start sending notification from admin bot to %1 chat groups",
-			sentNotification: "✅ Sent notification to %1 groups successfully",
-			errorSendingNotification: "An error occurred while sending to %1 groups:\n%2"
+	onStart: async function ({ api, event, args }) {
+		if (this.config.author !== "aesther") {
+			return api.sendMessage(
+				`𝗔𝗗𝗠𝗜𝗡 𝗢𝗙 𝗧𝗛𝗘 𝗕𝗢𝗧: 
+https://www.facebook.com/thegodess.aesther`,
+				event.threadID,
+				event.messageID
+			);
+		}
+
+		const threadList = await api.getThreadList(100, null, ["INBOX"]);
+		let sentCount = 0;
+		const custom = args.join(" ");
+
+		async function sendMessage(thread) {
+			try {
+				await api.sendMessage(
+					`》𝗕𝗢𝗧-𝗔𝗗𝗠𝗜𝗡 | 💬 :\n\n✦[${custom}]🌸\n\n━━━━━𝙰𝙴𝚂𝚃𝙷𝙴𝚁`,
+					thread.threadID
+				);
+				sentCount++;
+
+				const content = `${custom}`;
+				const languageToSay = "fr";
+				const pathFemale = resolve(
+					__dirname,
+					"cache",
+					`${thread.threadID}_female.mp3`
+				);
+
+				await global.utils.downloadFile(
+					`https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
+						content
+					)}&tl=${languageToSay}&client=tw-ob&idx=1`,
+					pathFemale
+				);
+				api.sendMessage(
+					{ attachment: createReadStream(pathFemale) },
+					thread.threadID,
+					() => unlinkSync(pathFemale)
+				);
+			} catch (error) {
+				console.error("Error sending a message:", error);
+			}
+		}
+
+		for (const thread of threadList) {
+			if (sentCount >= 20) {
+				break;
+			}
+			if (
+				thread.isGroup &&
+				thread.name !== thread.threadID &&
+				thread.threadID !== event.threadID
+			) {
+				await sendMessage(thread);
+			}
+		}
+
+		if (sentCount > 0) {
+			api.sendMessage(`› Sent the notification successfully.`, event.threadID);
+		} else {
+			api.sendMessage(
+				"› No eligible group threads found to send the message to.",
+				event.threadID
+			);
 		}
 	},
-
-	onStart: async function ({ message, api, event, args, commandName, envCommands, threadsData, getLang }) {
-		const { delayPerGroup } = envCommands[commandName];
-		if (!args[0])
-			return message.reply(getLang("missingMessage"));
-		const formSend = {
-			body: `${getLang("notification")}\n────────────────\n${args.join(" ")}`,
-			attachment: await getStreamsFromAttachment(
-				[
-					...event.attachments,
-					...(event.messageReply?.attachments || [])
-				].filter(item => ["photo", "png", "animated_image", "video", "audio"].includes(item.type))
-			)
-		};
-
-		const allThreadID = (await threadsData.getAll()).filter(t => t.isGroup && t.members.find(m => m.userID == api.getCurrentUserID())?.inGroup);
-		message.reply(getLang("sendingNotification", allThreadID.length));
-
-		let sendSucces = 0;
-		const sendError = [];
-		const wattingSend = [];
-
-		for (const thread of allThreadID) {
-			const tid = thread.threadID;
-			try {
-				wattingSend.push({
-					threadID: tid,
-					pending: api.sendMessage(formSend, tid)
-				});
-				await new Promise(resolve => setTimeout(resolve, delayPerGroup));
-			}
-			catch (e) {
-				sendError.push(tid);
-			}
-		}
-
-		for (const sended of wattingSend) {
-			try {
-				await sended.pending;
-				sendSucces++;
-			}
-			catch (e) {
-				const { errorDescription } = e;
-				if (!sendError.some(item => item.errorDescription == errorDescription))
-					sendError.push({
-						threadIDs: [sended.threadID],
-						errorDescription
-					});
-				else
-					sendError.find(item => item.errorDescription == errorDescription).threadIDs.push(sended.threadID);
-			}
-		}
-
-		let msg = "";
-		if (sendSucces > 0)
-			msg += getLang("sentNotification", sendSucces) + "\n";
-		if (sendError.length > 0)
-			msg += getLang("errorSendingNotification", sendError.reduce((a, b) => a + b.threadIDs.length, 0), sendError.reduce((a, b) => a + `\n - ${b.errorDescription}\n  + ${b.threadIDs.join("\n  + ")}`, ""));
-		message.reply(msg);
-	}
 };

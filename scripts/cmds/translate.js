@@ -1,19 +1,23 @@
 const axios = require('axios');
-const defaultEmojiTranslate = "🌐";
+const defaultEmojiTranslate = "🫠";
 
 module.exports = {
 	config: {
 		name: "translate",
-		aliases: ["trans"],
-		version: "1.5",
+		aliases: ["trans","trad"],
+		version: "1.4",
 		author: "NTKhang",
 		countDown: 5,
 		role: 0,
-		description: {
+		shortDescription: {
+			vi: "Dịch văn bản",
+			en: "Translate text"
+		},
+		longDescription: {
 			vi: "Dịch văn bản sang ngôn ngữ mong muốn",
 			en: "Translate text to the desired language"
 		},
-		category: "utility",
+		category: "ai",
 		guide: {
 			vi: "   {pn} <văn bản>: Dịch văn bản sang ngôn ngữ của box chat bạn hoặc ngôn ngữ mặc định của bot"
 				+ "\n   {pn} <văn bản> -> <ISO 639-1>: Dịch văn bản sang ngôn ngữ mong muốn"
@@ -43,7 +47,7 @@ module.exports = {
 
 		},
 		en: {
-			translateTo: "🌐 Translate from %1 to %2",
+			translateTo: "[🌍]  𝗧𝗥𝗔𝗡𝗦 :【%1 > %2】",
 			invalidArgument: "❌ Invalid argument, please choose on or off",
 			turnOnTransWhenReaction: `✅ Turn on translate message when reaction, try to react \"${defaultEmojiTranslate}\" to any message to translate it (not support bot message)\n Only translate message after turn on this feature`,
 			turnOffTransWhenReaction: "✅ Turn off translate message when reaction",
@@ -130,7 +134,7 @@ module.exports = {
 				return message.reply(getLang("emojiSet", emoji), () => message.unsend(Reaction.messageID));
 			}
 			case "translate": {
-				const emojiTrans = await threadsData.get(event.threadID, "data.translate.emojiTranslate") || "🌐";
+				const emojiTrans = await threadsData.get(event.threadID, "data.translate.emojiTranslate") || "🌍";
 				if (event.reaction == emojiTrans) {
 					const langCodeTrans = await threadsData.get(event.threadID, "data.lang") || global.GoatBot.config.language;
 					const content = Reaction.body;
@@ -152,5 +156,5 @@ async function translate(text, langCode) {
 
 async function translateAndSendMessage(content, langCodeTrans, message, getLang) {
 	const { text, lang } = await translate(content.trim(), langCodeTrans.trim());
-	return message.reply(`${text}\n\n${getLang("translateTo", lang, langCodeTrans)}`);
+	return message.reply(`${text} 🌸\n\n${getLang("translateTo", lang, langCodeTrans)}`);
 }
