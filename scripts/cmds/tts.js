@@ -73,7 +73,7 @@ module.exports = {
       fs.writeFileSync(filePath, res.data);
 
       api.sendMessage({
-        body: `✅ | Here is your voice from ${selected.name} ${emoji}`,
+        body: `✅ | ${selected.name} ${emoji}`,
         attachment: fs.createReadStream(filePath)
       }, event.threadID, () => {
         // Clean file after sending
