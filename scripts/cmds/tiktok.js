@@ -1,4 +1,4 @@
-@cmd install tiktok.js const axios = require("axios");
+const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "tiktok",
     version: "1.1",
-    author: "ChatGPT x DiiOffc",
+    author: "aesther",
     countDown: 5,
     role: 0,
     shortDescription: {
