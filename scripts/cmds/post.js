@@ -5,77 +5,96 @@ const path = require("path");
 module.exports = {
   config: {
     name: "post",
-    aliases: [],
-    version: "2.0",
+    version: "1.5",
     author: "Aesther",
+    countDown: 5,
     role: 2,
-    shortDescription: "Créer un post Facebook (texte, image, vidéo)",
-    longDescription: "Publie un message avec ou sans pièces jointes (images ou vidéos)",
-    category: "tools",
-    guide: "{pn} <texte> ou réponds à une image/vidéo"
+    shortDescription: "Créer un post avec texte + image ou vidéo",
+    longDescription: "Publie un post Facebook depuis un message avec ou sans pièce jointe (image/vidéo).",
+    category: "utils",
+    guide: "{pn} <texte> ou répondre à un média (image/vidéo)"
   },
 
   onStart: async function ({ api, event, args }) {
     const { threadID, messageID, messageReply, attachments } = event;
-    const postMessage = args.join(" ");
-    const filePaths = [];
-
-    const allAttachments = (messageReply?.attachments?.length
-      ? messageReply.attachments
-      : attachments) || [];
-
-    const files = [];
+    let postMessage = args.join(" ");
+    let files = [];
 
     try {
-      // Téléchargement des fichiers joints
-      for (const attachment of allAttachments) {
-        const fileExt = attachment.type === "video" ? ".mp4" : ".png";
-        const filePath = path.join(__dirname, "cache", `post_${Date.now()}_${Math.floor(Math.random() * 9999)}${fileExt}`);
+      // Récupère les pièces jointes depuis le message ou la réponse
+      const allAttachments = messageReply?.attachments?.length
+        ? messageReply.attachments
+        : attachments || [];
 
-        const response = await axios.get(attachment.url, {
-          responseType: "stream",
-          headers: { "User-Agent": "Mozilla/5.0" }
+      // Téléchargement de chaque fichier joint
+      for (const attachment of allAttachments) {
+        const fileExt = attachment.type === "video" ? ".mp4" : ".jpg";
+        const filePath = path.join(__dirname, "cache", `post_${Date.now()}${fileExt}`);
+
+        const response = await axios({
+          url: attachment.url,
+          method: "GET",
+          responseType: "stream"
         });
 
         const writer = fs.createWriteStream(filePath);
         response.data.pipe(writer);
-        await new Promise((res, rej) => {
-          writer.on("finish", res);
-          writer.on("error", rej);
+
+        await new Promise((resolve, reject) => {
+          writer.on("finish", resolve);
+          writer.on("error", reject);
         });
 
         files.push(fs.createReadStream(filePath));
-        filePaths.push(filePath);
       }
 
-      const postData = {
-        body: postMessage || "(aucun texte fourni)"
-      };
+      // Données à poster
+      const postData = { body: postMessage };
       if (files.length > 0) postData.attachment = files;
 
-      // Création du post
+      // Crée le post
       api.createPost(postData)
         .then((url) => {
-          api.sendMessage(`✅ 𝗣𝗼𝘀𝘁 𝗰𝗿éé 𝗮𝘃𝗲𝗰 𝘀𝘂𝗰𝗰è𝘀 !\n🔗 ${url || "Aucun lien retourné."}`, threadID, messageID);
+          api.sendMessage(
+            `✅ Publication réussie !\n🔗 ${url || "Lien non retourné"}`,
+            threadID,
+            messageID
+          );
         })
-        .catch((err) => {
-          const fallbackUrl = err?.data?.story_create?.story?.url;
-          if (fallbackUrl) {
-            return api.sendMessage(`✅ 𝗣𝗼𝘀𝘁 𝗰𝗿éé !\n🔗 ${fallbackUrl}\n⚠️ (Avec avertissements)`, threadID, messageID);
+        .catch((error) => {
+          const fallback = error?.data?.story_create?.story?.url;
+          const errMsg = error?.message || "Erreur inconnue.";
+          if (fallback) {
+            return api.sendMessage(
+              `✅ Publication réussie (avec avertissement)\n🔗 ${fallback}`,
+              threadID,
+              messageID
+            );
           }
-
-          const errMsg = err?.message || "❌ Erreur inconnue.";
-          api.sendMessage(`❌ 𝗘𝗿𝗿𝗲𝘂𝗿 𝗹𝗼𝗿𝘀 𝗱𝘂 𝗽𝗼𝘀𝘁 :\n${errMsg}`, threadID, messageID);
+          api.sendMessage(`❌ Échec de la publication :\n${errMsg}`, threadID, messageID);
         })
         .finally(() => {
-          for (const path of filePaths) {
-            fs.unlink(path, () => {});
+          // Nettoyage des fichiers temporaires
+          for (const stream of files) {
+            if (stream.path) {
+              fs.unlink(stream.path, err => {
+                if (err) console.error("Erreur suppression cache:", err);
+              });
+            }
           }
         });
 
     } catch (error) {
-      console.error("❌ Erreur dans la commande post:", error);
-      return api.sendMessage("❌ Une erreur est survenue lors de la création du post.", threadID, messageID);
+      console.error("Erreur:", error);
+      api.sendMessage("❌ Une erreur est survenue durant la publication.", threadID, messageID);
+      // Nettoyage même en cas d'erreur
+      for (const stream of files) {
+        if (stream.path) {
+          fs.unlink(stream.path, err => {
+            if (err) console.error("Erreur suppression cache:", err);
+          });
+        }
+      }
     }
   }
 };
