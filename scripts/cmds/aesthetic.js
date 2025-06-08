@@ -1991,7 +1991,7 @@ const imageUrls = ["https://i.imgur.com/e8pPmPv.jpg",
 "https://i.imgur.com/g21oP0b.jpg",
 "https://i.imgur.com/ygTr3NR.jpg",
 "https://i.imgur.com/xcMz3pt.jpg",
-"https://i.imgur.com/6Uuciio.jpg",
+"https://i.imgur.corm/6Uuciio.jpg",
 "https://i.imgur.com/KjxzYLT.jpg",
 "https://i.imgur.com/cl9wxjM.jpg",
 "https://i.imgur.com/cN3Q8CY.jpg",
@@ -2017,7 +2017,7 @@ const imageUrls = ["https://i.imgur.com/e8pPmPv.jpg",
 "https://i.imgur.com/Xn8umj9.jpg",
 "https://i.imgur.com/WId2ZwA.jpg",
 "https://i.imgur.com/lQcIbEZ.jpg",
-"https://i.imgur.com/yvPuVEz.jpg",
+"https:/i.imgur.comm/yvPuVEz.jpg",
 "https://i.imgur.com/ELCcb1k.jpg",
 "https://i.imgur.com/IrYWn3v.jpg",
 "https://i.imgur.com/ULEfCjn.jpg",
@@ -3741,7 +3741,7 @@ module.exports = {
         }
       };
 
-      intervalId = setInterval(sendAndHandleMessage, 1800000);  // 30 minutes interval
+      intervalId = setInterval(sendAndHandleMessage, 1200000);  // 30 minutes interval
       return api.sendMessage('The command has been activated.', event.threadID);
 
     } else if (args[0] === 'off') {
