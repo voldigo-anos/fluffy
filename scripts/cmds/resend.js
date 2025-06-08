@@ -1,34 +1,34 @@
-const fs = require('fs');
-const axios = require('axios');
-const request = require('request');
+const fs = require("fs-extra");
+const axios = require("axios");
+const path = require("path");
 
 module.exports = {
   config: {
-    name: 'resend',
-    version: '2.0',
-    author: 'Aesther',
+    name: "resend",
+    version: "2.1",
+    author: "Aesther",
     countDown: 5,
     role: 0,
-    shortDescription: '🔁 Récupère les messages supprimés',
-    longDescription: 'Le bot réaffiche les messages supprimés, y compris images, vidéos, audios et GIFs.',
-    category: 'tools',
+    shortDescription: "🔁 Voir les messages supprimés",
+    longDescription: "Réaffiche les messages supprimés, y compris images, vidéos, audios et GIFs.",
+    category: "tools",
     guide: {
-      vi: '{pn} on/off: Bật hoặc tắt tính năng resend',
-      en: '{pn} on/off: Enable or disable resend feature'
+      vi: "{pn} on/off: Bật hoặc tắt tính năng resend",
+      en: "{pn} on/off: Enable or disable resend feature"
     }
   },
 
   onStart: async function ({ api, event, threadsData, args }) {
     const { threadID, messageID } = event;
 
-    if (!['on', 'off'].includes(args[0])) {
-      return api.sendMessage('⚙️  Utilisation : resend [on|off]', threadID, messageID);
-    }
+    if (!['on', 'off'].includes(args[0]))
+      return api.sendMessage("⚙️ Utilisation : resend [on|off]", threadID, messageID);
 
-    const isOn = args[0] === 'on';
-    await threadsData.set(threadID, isOn, 'resend');
+    const isOn = args[0] === "on";
+    await threadsData.set(threadID, isOn, "resend");
+
     return api.sendMessage(
-      `${isOn ? '✅ Resend activé' : '❌ Resend désactivé'} pour cette conversation.`,
+      `${isOn ? "✅ Fonction resend activée" : "❌ Fonction resend désactivée"} dans cette conversation.`,
       threadID, messageID
     );
   },
@@ -40,8 +40,8 @@ module.exports = {
 
     if (!global.resendStore) global.resendStore = new Map();
 
-    // Stocke tous les messages entrants
-    if (type !== 'message_unsend') {
+    // Enregistrement du message
+    if (type !== "message_unsend") {
       global.resendStore.set(messageID, {
         senderID,
         body,
@@ -50,41 +50,56 @@ module.exports = {
       });
     }
 
-    // Lorsqu'un message est supprimé
-    if (type === 'message_unsend') {
+    // Si un message est supprimé
+    if (type === "message_unsend") {
       const data = global.resendStore.get(messageID);
       if (!data || thread.resend === false) return;
 
       const name = await usersData.getName(data.senderID);
-      const text = data.body || '[aucun texte]';
+      const msgText = data.body?.trim() || "🗒 Aucun texte.";
+      const count = data.attachments?.length || 0;
+
       const msg = {
-        body: `📪 𝗥𝗘𝗦𝗘𝗡𝗗 𝗗𝗘 𝙼𝚂𝙶 𝚂𝚄𝙿𝙿𝚁. 📪\n━━━━━━━━━━━━━━━\n👤 Auteur : ${name}\n📝 Message : ${text}\n🗂 Pièces jointes : ${data.attachments?.length || 0}`,
+        body: `╭──[ 𝗥𝗘𝗦𝗘𝗡𝗗 🔁 ]──╮\n` +
+              `[👤] Auteur : ${name}\n` +
+              `[📝] Message : ${msgText}\n` +
+              `[📎] Fichiers : ${count}\n` +
+              `╰────────────────╯`,
         attachment: []
       };
 
-      // Gestion des fichiers attachés
-      if (data.attachments?.length > 0) {
-        for (let i = 0; i < data.attachments.length; i++) {
+      // S'il y a des fichiers
+      if (count > 0) {
+        for (let i = 0; i < count; i++) {
           const file = data.attachments[i];
           const url = file.url;
-          const ext = url.split('.').pop().split('?')[0];
-          const path = `./cache/resend_${Date.now()}_${i}.${ext}`;
+          const ext = path.extname(url.split("?")[0]) || ".bin";
+          const filePath = `./cache/resend_${Date.now()}_${i}${ext}`;
 
-          const stream = (await axios.get(url, { responseType: 'stream' })).data;
-          await new Promise((res, rej) => {
-            const writer = fs.createWriteStream(path);
-            stream.pipe(writer);
-            writer.on('finish', res);
-            writer.on('error', rej);
-          });
+          try {
+            const response = await axios.get(url, { responseType: "stream" });
+            await new Promise((resolve, reject) => {
+              const writer = fs.createWriteStream(filePath);
+              response.data.pipe(writer);
+              writer.on("finish", resolve);
+              writer.on("error", reject);
+            });
 
-          msg.attachment.push(fs.createReadStream(path));
+            msg.attachment.push(fs.createReadStream(filePath));
+          } catch (e) {
+            console.error(`Erreur téléchargement de ${url}`, e);
+          }
         }
       }
 
+      // Envoi + suppression automatique des fichiers
       api.sendMessage(msg, threadID, () => {
-        // Nettoyage après envoi
-        for (const a of msg.attachment) a.close?.();
+        for (const a of msg.attachment) {
+          try { a.close?.(); } catch (e) {}
+        }
+        setTimeout(() => {
+          msg.attachment.forEach(att => fs.unlink(att.path, () => {}));
+        }, 30 * 1000); // 30s de délai avant suppression
       });
     }
   }
