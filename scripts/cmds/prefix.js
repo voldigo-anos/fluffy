@@ -65,13 +65,13 @@ module.exports = {
         formSet.messageID = info.messageID;
         global.GoatBot.onReaction.set(info.messageID, formSet);
 
-        // Optionally expire the confirmation
+        // ⏱️ Supprimer automatiquement le message de confirmation après 60s
         setTimeout(() => {
           if (global.GoatBot.onReaction.has(info.messageID)) {
             global.GoatBot.onReaction.delete(info.messageID);
-            message.unsend(info.messageID);
           }
-        }, 60000); // 1 minute
+          message.unsend(info.messageID); // Supprime le message dans la conversation
+        }, 60 * 1000);
       }
     );
   },
