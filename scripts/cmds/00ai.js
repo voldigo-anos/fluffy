@@ -1,4 +1,4 @@
-@cmd install 00ai.js const axios = require("axios");
+const axios = require("axios");
 
 const Prefixes = ["ai", "anjara", "Ae"];
 
