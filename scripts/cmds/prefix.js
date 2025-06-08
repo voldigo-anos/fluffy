@@ -96,7 +96,7 @@ module.exports = {
       const name = (await usersData.get(event.senderID)).name;
       return message.reply({
         body: `🈷️ ${name} 🈷️` + getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID)),
-        attachment: await global.utils.getStreamFromURL("https://i.imgur.com/dV0G0Sw.jpeg")
+        attachment: await global.utils.getStreamFromURL("https://i.postimg.cc/x1hKHY9g/Hitube-Qrw-FK9-Eu5p-2025-06-08-21-58-44.jpg")
       });
     }
   }
