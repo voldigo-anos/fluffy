@@ -3717,7 +3717,7 @@ module.exports = {
           const response = await axios.get(randomImageUrl, { responseType: 'stream' });
 
           await api.sendMessage({
-            body: `▪〉×🌸𝘼𝙀𝙎𝙏𝙃𝙀𝙏𝙄𝙌𝙐𝙀🌸×\n────────────\n𝗧𝗛𝗘 𝗥𝗨𝗟𝗘𝗦:\n💯▪️https://www.facebook.com/Lukaryota45 💬\n📑 :${randomText} ☂`,
+            body: `▪〉×🌸𝘼𝙀𝙎𝙏𝙃𝙀𝙏𝙄𝙌𝙐𝙀🌸×\n────────────\n𝗧𝗛𝗘 𝗥𝗨𝗟𝗘𝗦:\n💯▪️https://www.facebook.com/thegoddess.aesther 💬\n📑 :${randomText} ☂`,
             attachment: response.data,
           }, event.threadID);
 
@@ -3730,7 +3730,7 @@ module.exports = {
 
         } catch (error) {
           console.error('Error fetching meme:', error.message);
-          await api.sendMessage('💢', event.threadID);
+          await api.sendMessage('📝-------', event.threadID);
         } finally {
           // Remove the loading message after 400 milliseconds if it exists
           if (sentMessage && sentMessage.messageID) {
