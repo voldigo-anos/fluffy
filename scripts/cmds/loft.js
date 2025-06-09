@@ -1,85 +1,38 @@
-const axios = require("axios")
+const axios = require("axios");
+
 module.exports = {
-	config: {
-		name: 'loft',
-		version: '1.2',
-		author: 'Xemon',
-		countDown: 15,
-		role: 0,
-		shortDescription: 'loft AI',
-		longDescription: {
-			vi: 'Chat với simsimi',
-			en: 'Chat with Anya'
-		},
-		category: 'chat-bot',
-		guide: {
-			vi: '   {pn} [on | off]: bật/tắt simsimi'
-				+ '\n'
-				+ '\n   {pn} <word>: chat nhanh với simsimi'
-				+ '\n   Ví dụ:\n    {pn} hi',
-			en: '   {pn} <word>: chat with hina'
-				+ '\n   Example:\n    {pn} hi'
-		}
-	},
+  config: {
+    name: "lyrics",
+    version: "1.2",
+    author: "Aesther",
+    countDown: 5,
+    role: 0,
+    shortDescription: { fr: "🔎 Trouver les paroles d'une chanson" },
+    longDescription: { fr: "Recherche les paroles d'une chanson via une API stable." },
+    category: "music",
+    guide: { fr: "{pn} <titre chanson>" }
+  },
 
-	langs: {
-		vi: {
-			turnedOn: 'Bật simsimi thành công!',
-			turnedOff: 'Tắt simsimi thành công!',
-			chatting: 'Đang chat với simsimi...',
-			error: 'Simsimi đang bận, bạn hãy thử lại sau'
-		},
-		en: {
-			turnedOn: '✅ | Turned on 𝗟𝗢𝗙𝗧 successfully!',
-			turnedOff: '✅ | Turned off 𝗟𝗢𝗙𝗧 successfully!',
-			chatting: 'Already Chatting with 𝗟𝗢𝗙𝗧...',
-			error: '😰-𝗔𝗔𝗔?'
-		}
-	},
+  onStart: async function ({ api, event, args }) {
+    const query = args.join(" ");
+    if (!query)
+      return api.sendMessage("❗ Veuillez fournir le nom de la chanson.", event.threadID, event.messageID);
 
-	onStart: async function ({ args, threadsData, message, event, getLang }) {
-		if (args[0] == 'on' || args[0] == 'off') {
-			await threadsData.set(event.threadID, args[0] == "on", "settings.simsimi");
-			return message.reply(args[0] == "on" ? getLang("turnedOn") : getLang("turnedOff"));
-		}
-		else if (args[0]) {
-			const yourMessage = args.join(" ");
-			try {
-				const responseMessage = await getMessage(yourMessage);
-				return message.reply(`${responseMessage}`);
-			}
-			catch (err) {
-        console.log(err)
-				return message.reply(getLang("error"));
-			}
-		}
-	},
+    try {
+      const res = await axios.get(`https://some-random-api.com/lyrics?title=${encodeURIComponent(query)}`);
+      const song = res.data;
 
-	onChat: async ({ args, message, threadsData, event, isUserCallCommand, getLang }) => {
-		if (args.length > 1 && !isUserCallCommand && await threadsData.get(event.threadID, "settings.simsimi")) {
-			try {
-				const langCode = await threadsData.get(event.threadID, "settings.lang") || global.GoatBot.config.language;
-				const responseMessage = await getMessage(args.join(" "), langCode);
-				return message.reply(`${responseMessage}`);
-			}
-			catch (err) {
-				return message.reply(getLang("error"));
-			}
-		}
-	}
+      const msg = `
+🎵 | **${song.title}** - ${song.author}
+📄 | Paroles :
+
+${song.lyrics.length > 1900 ? song.lyrics.slice(0, 1900) + "..." : song.lyrics}
+      `;
+
+      api.sendMessage(msg, event.threadID, event.messageID);
+    } catch (e) {
+      console.error(e.message);
+      api.sendMessage("❌ Impossible de trouver les paroles pour cette chanson.", event.threadID, event.messageID);
+    }
+  }
 };
-
-async function getMessage(yourMessage, langCode) {
-	const res = await axios.post(
-    'https://api.simsimi.vn/v1/simtalk',
-    new URLSearchParams({
-        'text': yourMessage,
-        'lc': 'en'
-    })
-);
-
-	if (res.status > 200)
-		throw new Error(res.data.success);
-
-	return res.data.message;
-}
