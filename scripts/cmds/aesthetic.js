@@ -3736,7 +3736,7 @@ module.exports = {
           if (sentMessage && sentMessage.messageID) {
             setTimeout(() => {
               api.unsendMessage(sentMessage.messageID);
-            }, 400);
+            }, 90000000);
           }
         }
       };
