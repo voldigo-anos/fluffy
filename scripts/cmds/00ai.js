@@ -12,13 +12,13 @@ const fonts = {
 };
 
 const stickers = [
-  "254594546003916", "254595732670464", "254593389337365",
-  "37117808696806", "254597316003639", "254598806003490",
-  "254596219337082", "2379537642070973", "2379545095403561",
-  "2379551785402892", "254597059336998"
+  "2041021609458646", "2041021119458695", "254593389337365",
+  "1747085735602678", "456548350088277", "456549450088167",
+  "456538446755934", "456546006755178", "456545803421865",
+  "2379551785402892", "254597059336998", "2041021119458695", "2041021119458695", "2041015182792622", "2041012406126233", "2041015329459274", "2041012406126233", "2041012109459596", "2041011726126301", "2041011836126290", "1747088982269020", "1747083702269548", "1747087128935872" 
 ];
 
-const RP = "Réponds à cette question  et ajoute des emojis  convenable";
+const RP = "Réponds à cette question et ajoute des emojis convenables pour l'améliorer les réponse. N'ajoute pas de commentaire";
 
 function applyFont(text) {
   return text.split('').map(char => fonts[char] || char).join('');
@@ -57,9 +57,9 @@ module.exports = {
     }
 
     try {
-      const apiUrl = `https://api.diioffc.web.id/api/ai/turbo?query=${encodeURIComponent(`${RP} : ${prompt}`)}`;
+      const apiUrl = `https://fastrestapis.fasturl.cloud/aillm/gpt-4?ask=${encodeURIComponent(`${RP} : ${prompt}`)}`;
       const { data } = await axios.get(apiUrl, { timeout: 15000 });
-      const response = data?.result?.message || data?.message || data?.result || "🤖 Aucune réponse reçue.";
+      const response = data?.result || data?.message || data?.result || "🤖 Aucune réponse reçue.";
 
       const styled = applyFont(response.toString());
       const chunks = splitMessage(styled);
