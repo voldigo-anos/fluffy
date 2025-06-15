@@ -49,7 +49,7 @@ module.exports = {
         return;
       }
 
-      const res = await axios.get(`https://api.nekorinn.my.id/ai/veniceai?text=${encodeURIComponent(prompt)}`);
+      const res = await axios.get(`https://api.nekorinn.my.id/ai/ripleai?text=${encodeURIComponent(prompt)}`);
       const reply = res.data.result;
 
       const fullMessage = `🟢 𝘼𝙀𝙎𝙏𝙃𝙀𝙍 ⚪ :\n[💬] ${toMathiasFont(senderName)}\n\n${toMathiasFont(reply)} 🟡`;
