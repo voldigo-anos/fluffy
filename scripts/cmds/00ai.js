@@ -15,7 +15,9 @@ const stickers = [
   "2041021609458646", "2041021119458695", "254593389337365",
   "1747085735602678", "456548350088277", "456549450088167",
   "456538446755934", "456546006755178", "456545803421865",
-  "2379551785402892", "254597059336998", "2041021119458695", "2041021119458695", "2041015182792622", "2041012406126233", "2041015329459274", "2041012406126233", "2041012109459596", "2041011726126301", "2041011836126290", "1747088982269020", "1747083702269548", "1747087128935872" 
+  "2379551785402892", "254597059336998", "2041021119458695", "2041015182792622",
+  "2041012406126233", "2041015329459274", "2041012109459596", "2041011726126301",
+  "2041011836126290", "1747088982269020", "1747083702269548", "1747087128935872" 
 ];
 
 const RP = "Réponds à cette question et ajoute des emojis convenables pour l'améliorer les réponse. N'ajoute pas de commentaire";
@@ -36,7 +38,7 @@ module.exports = {
   config: {
     name: "ai",
     aliases: ["ae"],
-    version: "1.5",
+    version: "2.0",
     author: "Aesther",
     countDown: 2,
     role: 0,
@@ -48,7 +50,6 @@ module.exports = {
 
   onStart: async function ({ message, args, event, api }) {
     const prompt = args.join(" ").trim();
-    const threadID = event.threadID;
     const messageID = event.messageID;
 
     if (!prompt) {
@@ -57,11 +58,11 @@ module.exports = {
     }
 
     try {
-      const apiUrl = `https://fastrestapis.fasturl.cloud/aillm/gpt-4?ask=${encodeURIComponent(`${RP} : ${prompt}`)}`;
+      const apiUrl = `https://api.nekorinn.my.id/ai/grok-3?text=${encodeURIComponent(`${RP} : ${prompt}`)}`;
       const { data } = await axios.get(apiUrl, { timeout: 15000 });
-      const response = data?.result || data?.message || data?.result || "🤖 Aucune réponse reçue.";
+      const response = typeof data.result === 'string' ? data.result : "🤖 Aucune réponse reçue.";
 
-      const styled = applyFont(response.toString());
+      const styled = applyFont(response);
       const chunks = splitMessage(styled);
       const sent = [];
 
@@ -112,12 +113,13 @@ module.exports = {
 
     const newPrompt = event.body.trim();
     const prompt = `${RP} : ${newPrompt}`;
-    try {
-      const apiUrl = `https://fastrestapis.fasturl.cloud/aillm/gpt-4o?ask=${encodeURIComponent(prompt)}`;
-      const { data } = await axios.get(apiUrl, { timeout: 15000 });
-      const response = data?.result || data?.message || data?.result || "🤖 Aucune réponse obtenue.";
 
-      const styled = applyFont(response.toString());
+    try {
+      const apiUrl = `https://api.nekorinn.my.id/ai/grok-3?text=${encodeURIComponent(prompt)}`;
+      const { data } = await axios.get(apiUrl, { timeout: 15000 });
+      const response = typeof data.result === 'string' ? data.result : "🤖 Aucune réponse.";
+
+      const styled = applyFont(response);
       const chunks = splitMessage(styled);
       const sent = [];
 
