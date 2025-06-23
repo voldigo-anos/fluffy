@@ -4,57 +4,83 @@ const path = require("path");
 
 module.exports = {
   config: {
-    name: "4k",
-    version: "1.2",
+    name: "upscale",
+    aliases: ["4k", "hd"],
+    version: "2.0",
     author: "Aesther",
-    countDown: 10,
+    countDown: 5,
     role: 0,
-    shortDescription: { fr: "⬆️ Améliorer la résolution d'une image" },
-    longDescription: { fr: "Upscale une image via URL ou en répondant à une image (nettoyage auto du cache)" },
-    category: "🖼️ Images",
-    guide: { fr: "{pn} <URL de l'image> ou répondre à une image" }
+    shortDescription: "✨ Améliorer une image avec différents niveaux de qualité",
+    longDescription: "Répond à une image ou donne une URL, puis choisis le niveau de qualité (1x, 2x, 4x)",
+    category: "image",
+    guide: "{pn} <image en réponse ou url>"
   },
 
-  onStart: async function ({ api, event, args }) {
-    let imageUrl = "";
+  onStart: async function ({ api, event, args, message }) {
+    const { threadID, messageID, messageReply } = event;
 
-    // Vérifie si on répond à une image
-    if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
-      const attachment = event.messageReply.attachments.find(att => att.type === "photo" || att.type === "image");
-      if (attachment) imageUrl = attachment.url;
+    let imageUrl;
+
+    // Cas 1 : réponse à une image
+    if (messageReply?.attachments?.[0]?.type === "photo") {
+      imageUrl = messageReply.attachments[0].url;
     }
 
-    // Sinon, utilise l'argument
-    if (!imageUrl) {
-      if (!args[0]) return api.sendMessage("❗️ Veuillez fournir une URL ou répondre à une image.", event.threadID, event.messageID);
+    // Cas 2 : URL directe
+    if (args[0]?.startsWith("http")) {
       imageUrl = args[0];
     }
 
-    if (!imageUrl.startsWith("http")) return api.sendMessage("❌ L'URL n'est pas valide.", event.threadID, event.messageID);
+    if (!imageUrl) {
+      return message.reply("📸 Réponds à une image ou donne un lien direct d’image.");
+    }
 
-    const resize = "4";
-    const encodedUrl = encodeURIComponent(imageUrl);
-    const apiUrl = `https://fastrestapis.fasturl.cloud/aiimage/upscale?imageUrl=${encodedUrl}&resize=${resize}`;
-    const tempFile = path.join(__dirname, "cache", `upscale_${Date.now()}.jpg`);
+    // Design + Emoji choix
+    const msg = `🌟 𝗨𝗽𝘀𝗰𝗮𝗹𝗲 - 𝗤𝘂𝗮𝗹𝗶𝘁é 💠\n\n🧠 Choisis le niveau d’amélioration :\n\n1️⃣ • Basique (x1)\n2️⃣ • Bon (x2)\n3️⃣ • 𝟰𝗞 Ultra HD (x4)\n\n⏳ Réagis pour commencer`;
+    const sent = await message.reply(msg);
+
+    const reactions = ["1️⃣", "2️⃣", "3️⃣"];
+    for (const react of reactions) await api.setMessageReaction(react, sent.messageID, () => {}, true);
+
+    global.GoatBot.onReaction.set(sent.messageID, {
+      commandName: this.config.name,
+      author: event.senderID,
+      imageUrl,
+    });
+  },
+
+  onReaction: async function ({ event, api, message, Reaction }) {
+    if (event.userID !== Reaction.author) return;
+
+    const qualityMap = {
+      "1️⃣": "1",
+      "2️⃣": "2",
+      "3️⃣": "4"
+    };
+
+    const scale = qualityMap[event.reaction];
+    if (!scale) return;
 
     try {
-      const res = await axios.get(apiUrl, { responseType: "arraybuffer" });
-      await fs.outputFile(tempFile, res.data);
+      message.reply(`📤 𝗨𝗣𝗦𝗖𝗔𝗟𝗘 x${scale} 🖼️`);
 
-      const message = `
-━━━━━━ ⬆️ 𝗨𝗣𝗦𝗖𝗔𝗟𝗘 ━━━━━━
-📈 𝗙𝗮𝗰𝘁𝗲𝘂𝗿  : x${resize}
-📤 `;
+      const res = await axios.get(
+        `https://nirkyy-dev.hf.space/api/v1/upscale?url=${encodeURIComponent(Reaction.imageUrl)}&scale=${scale}`,
+        { responseType: "arraybuffer" }
+      );
 
-      api.sendMessage({
-        body: message,
-        attachment: fs.createReadStream(tempFile)
-      }, event.threadID, () => fs.unlink(tempFile), event.messageID);
+      const fileName = `upscaled-${Date.now()}.png`;
+      const filePath = path.join(__dirname, "cache", fileName);
+      await fs.outputFile(filePath, res.data);
 
-    } catch (error) {
-      console.error("Upscale Error:", error.message);
-      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-      return api.sendMessage("❌ Une erreur est survenue lors du traitement de l'image.", event.threadID, event.messageID);
+      message.reply({
+        body: `━━ ⬆️ 𝗨𝗣𝗦𝗖𝗔𝗟𝗘  ${scale}x ━━`,
+        attachment: fs.createReadStream(filePath)
+      }, () => fs.unlinkSync(filePath));
+
+    } catch (err) {
+      console.error(err);
+      return message.reply("❌ Échec de l'amélioration. Vérifie le lien ou l’image.");
     }
   }
 };
