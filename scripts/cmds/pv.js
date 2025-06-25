@@ -20,7 +20,7 @@ module.exports = {
   onStart: async function ({ api, event, args }) {
     if (args.length < 2) {
       return api.sendMessage(
-        "{PF}PM 𝗨𝗜𝗗 [message]\n\n♡︎@pm 61555882584314 Salut 👋🙂",
+        "{PF}PM 𝗨𝗜𝗗 [message]\n\n♡︎@pm 100085261760009 Salut 👋🙂",
         event.threadID,
         event.messageID
       );
