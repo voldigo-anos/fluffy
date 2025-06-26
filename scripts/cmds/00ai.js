@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const Prefixes = ["ai", "anjara", "Ae", "Mld"];
+const Prefixes = ["ai", "anjara", "Ae", "mld"];
 
 const fonts = {
   a: "𝖺", b: "𝖻", c: "𝖼", d: "𝖽", e: "𝖾", f: "𝖿", g: "𝗀", h: "𝗁", i: "𝗂",
