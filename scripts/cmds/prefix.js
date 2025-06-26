@@ -1,149 +1,103 @@
+const fs = require("fs-extra");
 const axios = require("axios");
-
-const Prefixes = ["ai", "anjara", "Ae", "mld"];
-
-const fonts = {
-  a: "𝖺", b: "𝖻", c: "𝖼", d: "𝖽", e: "𝖾", f: "𝖿", g: "𝗀", h: "𝗁", i: "𝗂",
-  j: "𝗃", k: "𝗄", l: "𝗅", m: "𝗆", n: "𝗇", o: "𝗈", p: "𝗉", q: "𝗊", r: "𝗋",
-  s: "𝗌", t: "𝗍", u: "𝗎", v: "𝗏", w: "𝗐", x: "𝗑", y: "𝗒", z: "𝗓",
-  A: "𝖠", B: "𝖡", C: "𝖢", D: "𝖣", E: "𝖤", F: "𝖥", G: "𝖦", H: "𝖧", I: "𝖨",
-  J: "𝖩", K: "𝖪", L: "𝖫", M: "𝖬", N: "𝖭", O: "𝖮", P: "𝖯", Q: "𝖰", R: "𝖱",
-  S: "𝖲", T: "𝖳", U: "𝖴", V: "𝖵", W: "𝖶", X: "𝖷", Y: "𝖸", Z: "𝖹"
-};
-
-const stickers = [
-  "2041021609458646", "2041021119458695", "254593389337365",
-  "1747085735602678", "456548350088277", "456549450088167",
-  "456538446755934", "456546006755178", "456545803421865",
-  "2379551785402892", "254597059336998", "2041021119458695", "2041015182792622",
-  "2041012406126233", "2041015329459274", "2041012109459596", "2041011726126301",
-  "2041011836126290", "1747088982269020", "1747083702269548", "1747087128935872" 
-];
-
-const RP = "Réponds à cette question et ajoute des emojis convenables pour l'améliorer les réponse. N'ajoute pas de commentaire";
-
-function applyFont(text) {
-  return text.split('').map(char => fonts[char] || char).join('');
-}
-
-function splitMessage(text, maxLength = 2000) {
-  const chunks = [];
-  for (let i = 0; i < text.length; i += maxLength) {
-    chunks.push(text.substring(i, i + maxLength));
-  }
-  return chunks;
-}
+const { utils } = global;
 
 module.exports = {
   config: {
-    name: "ai",
-    aliases: ["ae"],
-    version: "2.0",
+    name: "prefix",
+    version: "1.4",
     author: "Aesther",
-    countDown: 2,
+    countDown: 5,
     role: 0,
-    shortDescription: "🤖 Pose une question à l'IA",
-    longDescription: "Obtiens une réponse stylisée de l'IA avec un design lisible et décoratif.",
-    category: "ai",
-    guide: "{pn} <question>"
-  },
-
-  onStart: async function ({ message, args, event, api }) {
-    const prompt = args.join(" ").trim();
-    const messageID = event.messageID;
-
-    if (!prompt) {
-      const randomSticker = stickers[Math.floor(Math.random() * stickers.length)];
-      return message.send({ sticker: randomSticker });
-    }
-
-    try {
-      const apiUrl = `https://api.nekorinn.my.id/ai/grok-3?text=${encodeURIComponent(`${RP} : ${prompt}`)}`;
-      const { data } = await axios.get(apiUrl, { timeout: 15000 });
-      const response = typeof data.result === 'string' ? data.result : "🤖 Aucune réponse reçue.";
-
-      const styled = applyFont(response);
-      const chunks = splitMessage(styled);
-      const sent = [];
-
-      for (const chunk of chunks) {
-        const msg = await message.reply(chunk + (chunk === chunks[chunks.length - 1] ? " 🪐" : ""));
-        sent.push(msg.messageID);
-
-        global.GoatBot.onReply.set(msg.messageID, {
-          commandName: this.config.name,
-          messageID: msg.messageID,
-          author: event.senderID,
-          prompt
-        });
-
-        setTimeout(() => {
-          global.GoatBot.onReply.delete(msg.messageID);
-        }, 2 * 60 * 1000);
-      }
-
-      await api.setMessageReaction("✨", messageID, () => {}, true);
-
-      setTimeout(() => {
-        for (const id of sent) {
-          api.unsendMessage(id);
-        }
-      }, 60 * 1000);
-
-    } catch (err) {
-      console.error(err);
-      const errMsg = err.code === 'ECONNABORTED'
-        ? "⚠️ Le serveur met trop de temps à répondre. Réessaie plus tard."
-        : "❌ Une erreur est survenue lors de la connexion à l'API.";
-      return message.reply(applyFont(errMsg));
+    shortDescription: "Thay đổi prefix của bot",
+    longDescription: "Thay đổi prefix của bot trong box chat hoặc toàn hệ thống",
+    category: "config",
+    guide: {
+      vi: "   {pn} <prefix>: đổi prefix trong box\n   {pn} <prefix> -g: đổi prefix toàn hệ thống (admin)\n   {pn} reset: reset về mặc định",
+      en: "   {pn} <prefix>: change local prefix\n   {pn} <prefix> -g: change global prefix (admin)\n   {pn} reset: reset to default"
     }
   },
 
-  onChat: async function ({ api, event, message }) {
-    if (!event.body) return;
-    const prefix = Prefixes.find(p => event.body.toLowerCase().startsWith(p));
-    if (!prefix) return;
-
-    const args = event.body.slice(prefix.length).trim().split(/\s+/);
-    this.onStart({ message, args, event, api });
+  langs: {
+    vi: {
+      reset: "✅ Prefix của bạn đã được đặt lại về mặc định: %1",
+      onlyAdmin: "⚠️ Chỉ admin mới có thể thay đổi prefix toàn hệ thống!",
+      confirmGlobal: "📢 Hãy thả cảm xúc để xác nhận thay đổi prefix toàn hệ thống",
+      confirmThisThread: "📥 Thả cảm xúc để xác nhận thay đổi prefix nhóm này",
+      successGlobal: "✅ Đã thay đổi prefix hệ thống thành: %1",
+      successThisThread: "✅ Đã thay đổi prefix nhóm thành: %1",
+      myPrefix: "\n🔮𝐌𝐋𝐃•𝐆𝐎𝐀𝐓𝐁𝐎𝐓🔮\n\n ☞𝗣𝗙 : [ %2 ]\n\n🌍 [𝗚𝗢𝗔𝗧𝗕𝗢𝗧]\n✅ 𝐎𝐖𝐍𝐄𝐑•𝐅𝐁☞: \n✰ m.me/100085261760009\n✦𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐦𝐨𝐢✦"
+    },
+    en: {
+      reset: "✅ Your prefix has been reset to default: %1",
+      onlyAdmin: "⚠️ Only admin can change system prefix!",
+      confirmGlobal: "📢 React to confirm changing system prefix",
+      confirmThisThread: "📥 React to confirm changing your group prefix",
+      successGlobal: "✅ Global prefix changed to: %1",
+      successThisThread: "✅ Prefix changed in your chat to: %1",
+      myPrefix: "\n🔮𝐌𝐋𝐃•𝐆𝐎𝐀𝐓𝐁𝐎𝐓🔮\n\n ☞𝗣𝗙 : [ %2 ]\n\n🌍 [𝗚𝗢𝗔𝗧𝗕𝗢𝗧]\n✅ 𝐎𝐖𝐍𝐄𝐑•𝐅𝐁☞: \n✰ m.me/100085261760009\n✦𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐦𝐨𝐢✦"
+    }
   },
 
-  onReply: async function ({ args, event, api, message, Reply }) {
-    if (event.senderID !== Reply.author) return;
+  onStart: async function ({ message, role, args, commandName, event, threadsData, getLang }) {
+    if (!args[0])
+      return message.SyntaxError();
 
-    const newPrompt = event.body.trim();
-    const prompt = `${RP} : ${newPrompt}`;
+    if (args[0].toLowerCase() === 'reset') {
+      await threadsData.set(event.threadID, null, "data.prefix");
+      return message.reply(getLang("reset", global.GoatBot.config.prefix));
+    }
 
-    try {
-      const apiUrl = `https://api.nekorinn.my.id/ai/grok-3?text=${encodeURIComponent(prompt)}`;
-      const { data } = await axios.get(apiUrl, { timeout: 15000 });
-      const response = typeof data.result === 'string' ? data.result : "🤖 Aucune réponse.";
+    const newPrefix = args[0];
+    const formSet = {
+      commandName,
+      author: event.senderID,
+      newPrefix,
+      setGlobal: args[1] === "-g"
+    };
 
-      const styled = applyFont(response);
-      const chunks = splitMessage(styled);
-      const sent = [];
+    if (formSet.setGlobal && role < 2)
+      return message.reply(getLang("onlyAdmin"));
 
-      for (const chunk of chunks) {
-        const msg = await message.reply(chunk + (chunk === chunks[chunks.length - 1] ? " 🪐" : ""));
-        sent.push(msg.messageID);
+    return message.reply(
+      formSet.setGlobal ? getLang("confirmGlobal") : getLang("confirmThisThread"),
+      (err, info) => {
+        formSet.messageID = info.messageID;
+        global.GoatBot.onReaction.set(info.messageID, formSet);
 
-        global.GoatBot.onReply.set(msg.messageID, {
-          commandName: this.config.name,
-          messageID: msg.messageID,
-          author: event.senderID,
-          prompt
-        });
-
+        // ⏱️ Supprimer automatiquement le message de confirmation après 60s
         setTimeout(() => {
-          global.GoatBot.onReply.delete(msg.messageID);
-        }, 2 * 60 * 1000);
+          if (global.GoatBot.onReaction.has(info.messageID)) {
+            global.GoatBot.onReaction.delete(info.messageID);
+          }
+          message.unsend(info.messageID); // Supprime le message dans la conversation
+        }, 60 * 1000);
       }
+    );
+  },
 
-      setTimeout(() => {
-        for (const id of sent) {
-          api.unsendMessage(id);
-        }
-      }, 60 * 1000);
+  onReaction: async function ({ message, event, threadsData, Reaction, getLang }) {
+    const { author, newPrefix, setGlobal } = Reaction;
+    if (event.userID !== author)
+      return message.reply("⚠️ Seul l'utilisateur qui a lancé la commande peut confirmer.");
 
-    } catch (err) {
-   
+    if (setGlobal) {
+      global.GoatBot.config.prefix = newPrefix;
+      fs.writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+      return message.reply(getLang("successGlobal", newPrefix));
+    } else {
+      await threadsData.set(event.threadID, newPrefix, "data.prefix");
+      return message.reply(getLang("successThisThread", newPrefix));
+    }
+  },
+
+  onChat: async function ({ event, message, usersData, getLang }) {
+    if (event.body?.trim().toLowerCase() === "prefix") {
+      const name = (await usersData.get(event.senderID)).name;
+      return message.reply({
+        body: `🌍 ${name} 🌏` + getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID)),
+        attachment: await global.utils.getStreamFromURL("https://i.postimg.cc/x1hKHY9g/Hitube-Qrw-FK9-Eu5p-2025-06-08-21-58-44.jpg")
+      });
+    }
+  }
+};
