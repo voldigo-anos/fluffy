@@ -19,14 +19,14 @@ module.exports = {
 			welcomeMessage: "Cảm ơn bạn đã mời tôi vào nhóm!\nPrefix bot: %1\nĐể xem danh sách lệnh hãy nhập: %1help",
 			multiple1: "bạn",
 			multiple2: "các bạn",
-			defaultWelcomeMessage: "Xin chào {userName}.\nChào mừng bạn đến với {boxName}.\nChúc bạn có buổi {session} vui vẻ!"
+			defaultWelcomeMessage: "Xin chào {userName}.\nChào mừng bạn đến với {box}.\nChúc bạn có buổi {session} vui vẻ!"
 		},
 		en: {
 			session1: "morning",
 			session2: "noon",
 			session3: "afternoon",
 			session4: "evening",
-			welcomeMessage: "『✅』𝗕𝗢𝗧 𝗖𝗢𝗡𝗡𝗘𝗖𝗧𝗘́ \n━━━━━━━━━━━━━━━━\n➤﹝🌍﹞𝐏𝐑𝐄𝐅𝐈𝐗「%1」\n『✅』𝗠𝗟𝗗☆𝗝𝗢𝗨𝗝𝗢𝗨\n☞ 𝗢𝗪𝗡𝗘𝗥👑 :\nm.me/100085261760009\n",
+			welcomeMessage: "『✅』𝗕𝗢𝗧 𝗖𝗢𝗡𝗡𝗘𝗖𝗧𝗘́ \n━━━━━━━━━━━━━━━━\n\n➤﹝🌍﹞𝐏𝐑𝐄𝐅𝐈𝐗『%1』\n\n『✅』𝗠𝗟𝗗☆𝗝𝗢𝗨𝗝𝗢𝗨\n\n☞ 𝗢𝗪𝗡𝗘𝗥👑 :\nm.me/100085261760009\n",
 			multiple1: "you",
 			multiple2: "you guys",
 			defaultWelcomeMessage: `𝗤𝗨𝗘𝗘𝗡👑\n━━━━━━━━━━━━━━━\n[🆔] {userName}\n[🌍] {boxName}\n[☞] 𝐏𝐑𝐄𝐅𝐈𝐗 :☞ ['] \n━━━━━━━━━━━━━━━\n𝗦𝗼𝗶𝘁 𝗮𝗶𝗺𝗮𝗯𝗹𝗲 𝗮𝘃𝗲𝗰 𝘁𝗼𝘂𝘁 𝗹𝗲 𝗺𝗼𝗻𝗱𝗲 𝗲𝘁 𝘀𝘂𝗿𝘁𝗼𝘂𝗿 𝗿𝗲𝘁𝗶𝗲𝗻𝘁 𝗾𝘂𝗲 𝗛𝗜𝗠𝗥𝗔⚔️ 𝗲𝘀𝘁 𝗳𝗼𝗿𝘁 𝗾𝘂𝗲 𝗗𝗜𝗗𝗜 𝗕🤡`
