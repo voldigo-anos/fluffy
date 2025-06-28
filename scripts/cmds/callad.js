@@ -44,7 +44,7 @@ module.exports = {
 			content: "\n\nContent:\n─────────────────\n%1\n─────────────────\nReply this message to send message to user",
 			success: "[📧]",
 			failed: "An error occurred while sending your message to %1 admin\n%2\nCheck console for more details",
-			reply: "♡   ∩_∩\n（„• ֊ •„)♡\n┏━∪∪━━ღ❦ღ┓\n☪ [%2] ♡\n♡   𝘢𝘦𝘴𝘵𝘩𝘦𝘳-[📩]\n┗ღ❦ღ━━━━━┛[✦]",
+			reply: "♡   ∩_∩\n（„• ֊ •„)♡\n┏━∪∪━━ღ❦ღ┓\n☪ [%2] ♡\n♡   𝗥𝗘𝗣𝗢𝗡𝗦𝗘-[📩]\n┗ღ❦ღ━━━━━┛[✦]",
 			replySuccess: "📩",
 			feedback: "📝 Feedback from user %1:\n- User ID: %2%3\n\nContent:\n─────────────────\n%4\n─────────────────\nReply this message to send message to user",
 			replyUserSuccess: "Sent your reply to user successfully!",
